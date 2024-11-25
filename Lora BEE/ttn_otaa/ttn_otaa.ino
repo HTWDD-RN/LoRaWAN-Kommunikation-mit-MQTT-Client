@@ -57,7 +57,7 @@ static const u1_t PROGMEM APPEUI[8]={ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
 void os_getArtEui (u1_t* buf) { memcpy_P(buf, APPEUI, 8);}
 
 // This should also be in little endian format, see above.
-static const u1_t PROGMEM DEVEUI[8]={ 0x70, 0xB3, 0xD5, 0x7E, 0xD0, 0x06, 0xB8, 0x24 };
+static const u1_t PROGMEM DEVEUI[8]={ 0x24, 0xB8, 0x06, 0xD0, 0x7E, 0xD5, 0xB3, 0x70 };
 void os_getDevEui (u1_t* buf) { memcpy_P(buf, DEVEUI, 8);}
 
 // This key should be in big endian format (or, since it is not really a
@@ -161,6 +161,16 @@ void onEvent (ev_t ev) {
               Serial.print(F("Received "));
               Serial.print(LMIC.dataLen);
               Serial.println(F(" bytes of payload"));
+              // Convert received bytes to a string
+              char receivedMessage[LMIC.dataLen + 1]; // +1 for null terminator
+              for (int i = 0; i < LMIC.dataLen; i++) {
+                  receivedMessage[i] = (char)LMIC.frame[LMIC.dataBeg + i];
+              }
+              receivedMessage[LMIC.dataLen] = '\0'; // Null-terminate the string
+
+              // Print the received message as a string
+              Serial.print(F("Message: "));
+              Serial.println(receivedMessage);
             }
             // Schedule next transmission
             os_setTimedCallback(&sendjob, os_getTime()+sec2osticks(TX_INTERVAL), do_send);
