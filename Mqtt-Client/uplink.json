@@ -1,0 +1,71 @@
+{
+  "end_device_ids": {
+    "device_id": "lorawan-project-htw",
+    "application_ids": {
+      "application_id": "project-seminar-lorawan"
+    },
+    "dev_eui": "70B3D57ED006B824",
+    "join_eui": "0000000000000000",
+    "dev_addr": "260B7FAB"
+  },
+  "correlation_ids": [
+    "gs:uplink:01JE1ASYFC1816MNTSPT3DDRZV"
+  ],
+  "received_at": "2024-12-01T14:43:14.751690038Z",
+  "uplink_message": {
+    "session_key_id": "AZOCaY2XJNBmhSxWn6egKQ==",
+    "f_port": 1,
+    "f_cnt": 69,
+    "frm_payload": "SGVsbG8sIHdvcmxkIQ==",
+    "rx_metadata": [
+      {
+        "gateway_ids": {
+          "gateway_id": "nick1",
+          "eui": "58A0CBFFFE800F60"
+        },
+        "time": "2024-12-01T14:43:13.387021064Z",
+        "timestamp": 327342348,
+        "rssi": -111,
+        "channel_rssi": -111,
+        "snr": 3.75,
+        "location": {
+          "latitude": 50.9987,
+          "longitude": 13.7862,
+          "altitude": 111,
+          "source": "SOURCE_REGISTRY"
+        },
+        "uplink_token": "ChMKEQoFbmljazESCFigy//+gA9gEIyyi5wBGgwIguyxugYQkcTGgQIg4K3/uMOAAw==",
+        "received_at": "2024-12-01T14:43:14.473214013Z"
+      }
+    ],
+    "settings": {
+      "data_rate": {
+        "lora": {
+          "bandwidth": 125000,
+          "spreading_factor": 7,
+          "coding_rate": "4/5"
+        }
+      },
+      "frequency": "867700000",
+      "timestamp": 327342348,
+      "time": "2024-12-01T14:43:13.387021064Z"
+    },
+    "received_at": "2024-12-01T14:43:14.540961060Z",
+    "consumed_airtime": "0.061696s",
+    "packet_error_rate": 0.09090909,
+    "locations": {
+      "user": {
+        "latitude": 51.004672892621535,
+        "longitude": 13.768273625970954,
+        "source": "SOURCE_REGISTRY"
+      }
+    },
+    "network_ids": {
+      "net_id": "000013",
+      "ns_id": "EC656E0000000181",
+      "tenant_id": "ttn",
+      "cluster_id": "eu1",
+      "cluster_address": "eu1.cloud.thethings.network"
+    }
+  }
+}

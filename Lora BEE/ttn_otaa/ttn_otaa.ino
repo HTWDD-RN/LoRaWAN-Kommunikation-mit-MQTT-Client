@@ -171,9 +171,11 @@ void onEvent (ev_t ev) {
               // Print the received message as a string
               Serial.print(F("Message: "));
               Serial.println(receivedMessage);
+
+              // Schedule next transmission
+              os_setTimedCallback(&sendjob, os_getTime()+sec2osticks(TX_INTERVAL), do_send);
             }
-            // Schedule next transmission
-            os_setTimedCallback(&sendjob, os_getTime()+sec2osticks(TX_INTERVAL), do_send);
+            
             break;
         case EV_LOST_TSYNC:
             Serial.println(F("EV_LOST_TSYNC"));
