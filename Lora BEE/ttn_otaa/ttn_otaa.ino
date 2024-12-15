@@ -72,6 +72,11 @@ static osjob_t sendjob;
 // Schedule TX every this many seconds (might become longer due to duty
 // cycle limitations).
 const unsigned TX_INTERVAL = 60;
+const unsigned MAX_JOIN_ATTEMPTS = 5;
+const unsigned MAX_DOWNLINKS = 10;
+
+unsigned joinAttempts = 0;
+unsigned downlinkCount = 0;
 
 // Pin mapping
 const lmic_pinmap lmic_pins = {
@@ -105,6 +110,11 @@ void onEvent (ev_t ev) {
             Serial.println(F("EV_BEACON_TRACKED"));
             break;
         case EV_JOINING:
+            if (joinAttempts >= MAX_JOIN_ATTEMPTS) {
+                Serial.println(F("Max join attempts reached, stopping."));
+                exit(0);
+            }
+            joinAttempts++;
             Serial.println(F("EV_JOINING"));
             break;
         case EV_JOINED:
@@ -158,6 +168,11 @@ void onEvent (ev_t ev) {
             if (LMIC.txrxFlags & TXRX_ACK)
               Serial.println(F("Received ack"));
             if (LMIC.dataLen) {
+              downlinkCount++;
+              if (downlinkCount >= MAX_DOWNLINKS) {
+                  Serial.println(F("Max downlinks reached, stopping."));
+                  exit(0);
+              }
               Serial.print(F("Received "));
               Serial.print(LMIC.dataLen);
               Serial.println(F(" bytes of payload"));
@@ -168,7 +183,7 @@ void onEvent (ev_t ev) {
               }
               receivedMessage[LMIC.dataLen] = '\0'; // Null-terminate the string
 
-              // Print the received message as a string
+              // Print the received message as a stringø
               Serial.print(F("Message: "));
               Serial.println(receivedMessage);
 
@@ -202,6 +217,11 @@ void onEvent (ev_t ev) {
         ||    break;
         */
         case EV_TXSTART:
+            if (joinAttempts >= MAX_JOIN_ATTEMPTS) {
+                Serial.println(F("Max join attempts reached, stopping."));
+                exit(0);
+            }
+            joinAttempts++;
             Serial.println(F("EV_TXSTART"));
             break;
         case EV_TXCANCELED:

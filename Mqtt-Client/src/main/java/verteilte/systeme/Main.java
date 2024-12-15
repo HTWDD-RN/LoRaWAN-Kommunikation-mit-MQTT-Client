@@ -12,7 +12,8 @@ import java.util.UUID;
 
 public class Main {
     static ObjectMapper objectMapper = new ObjectMapper();
-    static String downlink = "{\"downlinks\":[{\"f_port\": 1,\"frm_payload\":\"vu8=\",\"priority\": \"HIGHEST\"}]}";
+    // 576f726c6420736179732068656c6c6f
+    static String downlink = "{\"downlinks\":[{\"f_port\": 1,\"frm_payload\":\"V29ybGQgc2F5cyBoZWxsbw==\",\"priority\": \"NORMAL\"}]}";
 
     public static void main(String[] args) throws JsonProcessingException {
         Mqtt3AsyncClient client = MqttClient.builder()
