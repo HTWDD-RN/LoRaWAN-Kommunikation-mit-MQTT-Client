@@ -8,7 +8,7 @@ import java.util.Base64;
 
 @ToString
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class PayloadDto {
+public class UplinkPayloadDto {
     public ReceivedMessage uplink_message;
 
     @ToString
