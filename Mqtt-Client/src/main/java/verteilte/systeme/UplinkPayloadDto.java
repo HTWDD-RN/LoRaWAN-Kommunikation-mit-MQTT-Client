@@ -20,6 +20,10 @@ public class UplinkPayloadDto {
             this.frm_payload = new String(Base64.getDecoder().decode(frm_payload), StandardCharsets.UTF_8);
         }
     }
+
+    public int getSrNr() {
+        return Integer.parseInt(uplink_message.frm_payload);
+    }
 }
 
 

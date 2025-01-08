@@ -9,10 +9,12 @@ import com.hivemq.client.mqtt.mqtt3.Mqtt3AsyncClient;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.util.HashMap;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.UUID;
 
 // TODO: measure RTT
-// TODO: subscribe to sent and resend downlink
+// TODO: resend downlink
 // TODO: test when compiling the sketch how much memory & flash is used / available.
 
 public class Main {
@@ -21,9 +23,9 @@ public class Main {
 //    static String downlink = "{\"downlinks\":[{\"f_port\": 1,\"frm_payload\":\"V29ybGQgc2F5cyBoZWxsbw==\",\"priority\": \"NORMAL\"}]}";
     static DownlinkPayloadDto.DownLink downlink = new DownlinkPayloadDto.DownLink();
     static Integer srNr = 1;
-    static HashMap<Integer, String> sentTime = new HashMap<>();
+    static HashMap<Integer, Long> sentTime = new HashMap<>();
 
-    public static void main(String[] args) throws JsonProcessingException {
+    public static void main(String[] args) {
         downlink.priority = "NORMAL";
         downlink.f_port = 1;
 
@@ -54,7 +56,12 @@ public class Main {
                 .topicFilter("v3/project-seminar-lorawan@ttn/devices/lorawan-project-htw/up")
                 .callback(uplinkMessage -> {
                     try {
-                        System.out.println("Received message: " + objectMapper.readValue(uplinkMessage.getPayloadAsBytes(), UplinkPayloadDto.class));
+                        var receivedMessage = objectMapper.readValue(uplinkMessage.getPayloadAsBytes(), UplinkPayloadDto.class);
+                        var messageNr = receivedMessage.getSrNr();
+                        var rtt = System.currentTimeMillis() - sentTime.get(messageNr);
+                        var time = DateFormat.getInstance().format(rtt);
+                        System.out.println("Received message: " + receivedMessage);
+                        System.out.println("Measured RTT: " + time);
                     } catch (IOException e) {
                         System.out.println(e.getMessage());
                     }
@@ -67,12 +74,35 @@ public class Main {
                         System.out.println("Subscribed");
                     }
                 });
+
+
+        Timer timer = new Timer();
+
+        // Step 2: Create a TimerTask subclass
+        TimerTask task = new TimerTask() {
+            @Override
+            public void run() {
+                try {
+                    publish(client);
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        };
+
+        // Step 4: Schedule the TimerTask
+        long delay = 300_000L; // Delay in milliseconds (5 min)
+        long period = 300_000L; // Period in milliseconds (5 min)
+
+        // Schedule the task to run after a delay and then repeatedly at a fixed interval
+        timer.schedule(task, delay, period);
     }
 
     public static void publish(Mqtt3AsyncClient client) throws JsonProcessingException {
         DownlinkPayloadDto dto = new DownlinkPayloadDto();
-        var time = DateFormat.getInstance().format(System.currentTimeMillis());
-        downlink.setFrm_payload(time, srNr);
+        var currentTime = System.currentTimeMillis();
+        var formattedTime = DateFormat.getInstance().format(currentTime);
+        downlink.setFrm_payload(formattedTime, srNr);
         dto.downlinks = new DownlinkPayloadDto.DownLink[]{downlink};
 
         client.publishWith()
@@ -84,9 +114,9 @@ public class Main {
                     if (throwable != null) {
                         System.out.println("Unsuccessful publish: " + throwable.getMessage());
                     } else {
-                        System.out.println("Published");
-                        srNr = srNr++; // TODO: check number increase
-                        sentTime.put(srNr, time);
+                        System.out.println("Published message nr: " + srNr);
+                        srNr++;
+                        sentTime.put(srNr, currentTime);
                     }
                 });
     }
