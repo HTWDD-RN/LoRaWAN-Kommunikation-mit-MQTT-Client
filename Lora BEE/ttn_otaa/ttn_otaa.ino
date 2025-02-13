@@ -33,9 +33,7 @@
 
 #include <lmic.h>
 #include <hal/hal.h>
-#include <SPI.h>
 #include <string.h>
-#include <Base64.h>
 
 //
 // For normal use, we require that you edit the sketch to replace FILLMEIN
@@ -80,7 +78,7 @@ const unsigned MAX_DOWNLINKS = 10;
 unsigned joinAttempts = 0;
 unsigned downlinkCount = 0;
 // Add a global variable to store srNr
-int srNr = -1;
+byte srNr = -1;
 
 // Pin mapping
 const lmic_pinmap lmic_pins = {
@@ -192,18 +190,19 @@ void onEvent (ev_t ev) {
               Serial.println(receivedMessage);
 
               // Extract srNr from the decoded message
-              String messageStr = String(receivedMessage);
-              int srNrIndex = messageStr.indexOf("srNr: ");
-              if (srNrIndex != -1) {
-                  srNr = messageStr.substring(srNrIndex + 6).toInt();
+              char messageStr[LMIC.dataLen + 1]; 
+              strcpy(messageStr, receivedMessage); 
+              char *srNrIndex = strstr(messageStr, "srNr: "); 
+              if (srNrIndex != NULL) {
+                  srNr = atoi(srNrIndex + 6); 
                   Serial.print(F("Extracted srNr: "));
                   Serial.println(srNr);
               }
 
+            }
               // Schedule next transmission
               os_setTimedCallback(&sendjob, os_getTime()+sec2osticks(TX_INTERVAL), do_send);
-            }
-            
+             Serial.println(F("Break in EV_Complete"));
             break;
         case EV_LOST_TSYNC:
             Serial.println(F("EV_LOST_TSYNC"));
@@ -263,13 +262,14 @@ void do_send(osjob_t* j){
         // Prepare upstream data transmission at the next possible time.
         if (srNr != -1) {
             // Include srNr in the uplink message
-            String uplinkMessage = String(srNr);
-            uplinkMessage.toCharArray((char*)mydata, sizeof(mydata));
+            snprintf((char*)mydata, sizeof(mydata), "%d", srNr); 
             LMIC_setTxData2(1, mydata, strlen((char*)mydata), 0);
-            Serial.println(F("Packet with srNr queued"));
+            Serial.print(F("Packet queued with srNr: "));
+            Serial.println(srNr);
         } else {
-            LMIC_setTxData2(1, mydata, sizeof(mydata)-1, 0);
-            Serial.println(F("Packet queued"));
+            snprintf((char*)mydata, sizeof(mydata), "%d", 999); 
+            LMIC_setTxData2(1, mydata, strlen((char*)mydata), 0);
+            Serial.println(F("Alive is sent"));
         }
     }
     // Next TX is scheduled after TX_COMPLETE event.

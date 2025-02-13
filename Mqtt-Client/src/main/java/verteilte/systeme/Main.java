@@ -13,14 +13,9 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
 
-// TODO: measure RTT
-// TODO: resend downlink
-// TODO: test when compiling the sketch how much memory & flash is used / available.
 
 public class Main {
     static ObjectMapper objectMapper = new ObjectMapper();
-    // 576f726c6420736179732068656c6c6f -- world says hello
-//    static String downlink = "{\"downlinks\":[{\"f_port\": 1,\"frm_payload\":\"V29ybGQgc2F5cyBoZWxsbw==\",\"priority\": \"NORMAL\"}]}";
     static DownlinkPayloadDto.DownLink downlink = new DownlinkPayloadDto.DownLink();
     static Integer srNr = 1;
     static HashMap<Integer, Long> sentTime = new HashMap<>();
@@ -58,10 +53,15 @@ public class Main {
                     try {
                         var receivedMessage = objectMapper.readValue(uplinkMessage.getPayloadAsBytes(), UplinkPayloadDto.class);
                         var messageNr = receivedMessage.getSrNr();
-                        var rtt = System.currentTimeMillis() - sentTime.get(messageNr);
-                        var time = DateFormat.getInstance().format(rtt);
-                        System.out.println("Received message: " + receivedMessage);
-                        System.out.println("Measured RTT: " + time);
+
+                        if( messageNr == 999) {
+                            System.out.println("Received Alive from the device");
+                        } else {
+                            var rtt = System.currentTimeMillis() - sentTime.get(messageNr);
+                            var time = DateFormat.getInstance().format(rtt);
+                            System.out.println("Received message: " + receivedMessage);
+                            System.out.println("Measured RTT: " + time);
+                        }
                     } catch (IOException e) {
                         System.out.println(e.getMessage());
                     }
@@ -115,8 +115,8 @@ public class Main {
                         System.out.println("Unsuccessful publish: " + throwable.getMessage());
                     } else {
                         System.out.println("Published message nr: " + srNr);
-                        srNr++;
                         sentTime.put(srNr, currentTime);
+                        srNr++;
                     }
                 });
     }
