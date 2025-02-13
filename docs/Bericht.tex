@@ -1,0 +1,270 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{listings}  % Für Code-Snippets
+\usepackage{hyperref}  % Für Hyperlinks (z.B. zu TTN)
+\usepackage{geometry}
+\geometry{a4paper, margin=25mm}
+
+\begin{document}
+
+  \begin{titlepage}
+
+    \begin{center}
+      \Huge
+  
+      HTW-Dresden
+  
+      Allgemeine Informatik
+  
+      \bigskip
+  
+      \LARGE
+  
+      \vfill
+  
+      \huge
+  
+      \textbf{Uplink-Downlink Kommunikation zwischen Arduino Uno mit LoRaWAN und MQTT-Client}
+  
+      \LARGE
+  
+      \vfill
+  
+      Projektseminar\\
+      Wintersemester 24/25
+  
+      \bigskip
+  
+    \end{center}
+  
+    \vfill
+  
+    \Large
+
+  
+    \vspace*{2\bigskipamount}
+  
+    \centering
+
+    \begingroup
+      \setlength{\tabcolsep}{12pt}
+      \begin{tabular}{lll}
+        Name:     & Gavrilova  \\[2.0ex]
+        Vorname:  & Anna   \\[2.0ex]
+        Matr. Nr.: & 53045  
+      \end{tabular}
+    \endgroup
+  
+    \vspace*{4\bigskipamount}
+  
+
+    Tag der Einreichung: \today
+  
+    \vspace*{2\bigskipamount}
+  
+    Professor: Prof. Dr.-Ing. Jörg Vogt 
+  
+  \end{titlepage}
+
+  \noindent
+
+  \tableofcontents
+  \newpage
+
+\section{Einleitung}
+Dieses Projekt demonstriert die bidirektionale Kommunikation zwischen einem Arduino-Gerät mit LoRaWAN-Modul und einem MQTT-Client über The Things Network (TTN). Es dient als Beispiel für die Implementierung von Up- und Downlinks in einem LoRaWAN-Netzwerk und die Verarbeitung der Daten mit einem MQTT-Client.
+
+
+
+\subsection{Hardware}
+\begin{itemize}
+\item \textbf{Arduino Uno}     
+\item \textbf{LoRa BEE v1.1}     
+\item \textbf{Antenne}     
+\item \textbf{LoRaWAN-Gateway} 
+\end{itemize}
+Eine detaillierte Beschreibung der Übertragungstechnik, Architektur und Hardware ist verfügbar unter:
+\url{https://github.com/HTWDD-RN/LoRaWAN-Wetterstation-SEN-15901/blob/main/docs/documentation.pdf}
+
+\section{Zielsetzung}
+
+Das Ziel dieses Projekts war die Implementierung einer bidirektionalen Kommunikation (Uplink und Downlink) zwischen einem Arduino Uno, ausgestattet mit einem LoRaWAN-Modul, und einem MQTT-Client. Die Kommunikation sollte über The Things Network (TTN) erfolgen.
+
+\section{Projektdurchführung}
+
+\subsection{Einrichtung der Arduino-Plattform und LoRaWAN-Anbindung}
+
+\begin{itemize}
+    \item \textbf{Hardware-Setup:} Ein Arduino Uno wurde mit einem LoRaWAN-Modul verbunden, um die Kommunikation über das LoRaWAN-Protokoll zu ermöglichen.
+    \item \textbf{Software-Einrichtung:} Die Arduino IDE wurde verwendet, um die erforderlichen Bibliotheken, insbesondere die LMIC (LoRaWAN in C) Bibliothek, zu installieren.
+    \item \textbf{TTN-Geräteregistrierung:} Das Gerät (Arduino mit LoRaWAN-Modul) wurde auf der Webseite von The Things Network (\url{https://www.thethingsnetwork.org/}) registriert.  Dabei wurden die Device EUI, Application EUI und der App Key generiert. Diese Schlüssel sind für die Authentifizierung des Geräts im Netzwerk unerlässlich.
+    \item \textbf{Konfiguration:} Die \texttt{config.h}-Datei der LMIC-Bibliothek wurde angepasst, um die korrekten Frequenzen für die Region (Europa, 868 MHz) einzustellen. Die Konfigurationsdatei ist essenziell für den korrekten Betrieb.
+    \item \textbf{Beispielcode:} Als Ausgangspunkt diente der Beispielcode der LMIC-Bibliothek, der für die Uplink- und Downlink-Ausgabe angepasst wurde.
+\end{itemize}
+
+\subsection{Uplink-Kommunikation}
+
+\begin{itemize}
+    \item \textbf{Implementierung:} Zunächst wurde die Uplink-Kommunikation implementiert. Der Arduino sendete in regelmäßigen Intervallen (jede Minute) eine einfache ``Hello World''-Nachricht an TTN.
+    \item \textbf{Verifizierung:} Die erfolgreiche Übertragung der Nachrichten konnte in der TTN-Konsole (Application Data) überprüft werden.
+\end{itemize}
+
+\subsection{Downlink-Kommunikation-Test}
+
+\begin{itemize}
+    \item \textbf{Grundlegende Tests:} Die Downlink-Kommunikation wurde getestet, indem Nachrichten im Hexadezimalformat über die TTN-Konsole an den Arduino gesendet wurden.
+    \item \textbf{Code-Anpassung:} Der LMIC-Beispielcode wurde erweitert, um nicht nur den Empfang einer Downlink-Nachricht zu bestätigen, sondern auch den Inhalt der Nachricht im seriellen Monitor der Arduino IDE anzuzeigen. Dies diente der Verifizierung der korrekten Übertragung.  Beispielcode (Ausschnitt):
+
+    \begin{lstlisting}[language=Java, caption=Arduino Code für Downlink-Anzeige, basicstyle=\scriptsize, showstringspaces=false]
+void onEvent (ev_t ev) {
+    // ... anderer Code ...
+    case EV_TXCOMPLETE:
+        Serial.println(F("EV_TXCOMPLETE (includes 
+            waiting for RX windows)"));
+        if (LMIC.txrxFlags & TXRX_ACK)
+          Serial.println(F("Received ack"));
+        if (LMIC.dataLen) {
+          downlinkCount++;
+          if (downlinkCount >= MAX_DOWNLINKS) {
+              Serial.println(F("Max downlinks reached,
+                stopping."));
+              exit(0);
+          }
+          Serial.print(F("Received "));
+          Serial.print(LMIC.dataLen);
+          Serial.println(F(" bytes of payload"));
+          // Convert received bytes to a string
+          char receivedMessage[LMIC.dataLen + 1]; 
+            // +1 for null terminator
+          for (int i = 0; i < LMIC.dataLen; i++) {
+              receivedMessage[i] 
+                = (char)LMIC.frame[LMIC.dataBeg + i];
+          }
+          // Null-terminate the string
+          receivedMessage[LMIC.dataLen] = '\0'; 
+
+
+          // Print the received message as a string
+          Serial.print(F("Message: "));
+          Serial.println(receivedMessage);
+
+          // Extract srNr from the decoded message
+          char messageStr[LMIC.dataLen + 1]; 
+          strcpy(messageStr, receivedMessage); 
+          char *srNrIndex = strstr(messageStr, "srNr: "); 
+          if (srNrIndex != NULL) {
+              srNr = atoi(srNrIndex + 6); 
+              Serial.print(F("Extracted srNr: "));
+              Serial.println(srNr);
+          }
+
+        }
+          // Schedule next transmission
+          os_setTimedCallback(&sendjob, os_getTime()+sec2osticks(TX_INTERVAL), do_send);
+         Serial.println(F("Break in EV_Complete"));
+        break;
+}
+    \end{lstlisting}
+\end{itemize}
+
+\subsection{Entwicklung des MQTT-Clients}
+
+\begin{itemize}
+    \item \textbf{Programmiersprache:} Der MQTT-Client wurde in Java implementiert, um eine flexible und plattformübergreifende Lösung zu gewährleisten.  Die \texttt{HiveMQ} Bibliothek wurde verwendet.
+    \item \textbf{Kommunikationsprinzip:}
+    \begin{enumerate}
+        \item Der MQTT-Client veröffentlicht eine Downlink-Nachricht auf dem TTN-Topic \texttt{.../down/push}.
+        \item TTN leitet die Nachricht an das Topic \texttt{.../down/queued} weiter.
+        \item TTN schickt die Nachricht an das Topic \texttt{.../down/sent}.
+        \item Der Arduino empfängt die Nachricht und sendet eine Bestätigungsnachricht (ACK) auf dem Topic \texttt{.../up}.
+        \item Der MQTT-Client abonniert das \texttt{.../up}-Topic und wartet auf die Bestätigung. Nach Empfang der Bestätigung sendet der Client die nächste Downlink-Nachricht.
+        \item Ein Timeout-Mechanismus (5 Minuten) wurde implementiert, um auf fehlende Uplink-Nachrichten zu reagieren und die Downlink-Nachricht erneut zu senden.
+    \end{enumerate}
+    \item \textbf{Sequenznummern und RTT-Messung:}  Um die Kommunikation zuverlässiger zu gestalten und Paketverluste zu erkennen, wurden die Nachrichten mit Sequenznummern versehen. Der Client speicherte die Sequenznummern und konnte so erkennen, ob eine empfangene Uplink-Nachricht zur gesendeten Downlink-Nachricht gehörte. Nach erfolgreicher Übertragung wurde die Round-Trip-Time (RTT) berechnet und in der Konsole ausgegeben.
+
+    \item \textbf{Nachrichtenbegrenzung (TTN Fair Use Policy):}  Um die Fair Use Policy von TTN einzuhalten, wurde die Anzahl der Nachrichten begrenzt:
+    \begin{itemize}
+        \item \textbf{Arduino:} Ein globaler Zähler wurde implementiert, der sowohl Join-, Uplink- als auch Downlink-Nachrichten zählt. Das Arduino-Programm wurde so konfiguriert, dass es nach 10 Nachrichten stoppt.
+        \item \textbf{MQTT-Client:} Der Client wurde auf maximal 5 gesendete Downlink-Nach"-rich"-ten begrenzt.
+    \end{itemize}
+\end{itemize}
+
+\newpage
+
+\section{Probleme und Lösungen}
+
+\subsection{Behobene Probleme}
+\\
+\begin{itemize}
+    \item \textbf{Downlink-Weiterleitungsproblem:}
+    \begin{itemize}
+        \item \textbf{Problem:} Downlink-Nachrichten, die vom MQTT-Client auf das \\ \texttt{.../down/queued}-Topic gesendet wurden, wurden von TTN auf \\ \texttt{.../down/sent} nicht weitergeleitet.
+        \item \textbf{Ursache:} Eine Änderung in der Logik des Arduino-Codes, die die Uplink-Nachrichten nur noch nach Empfang einer Downlink-Nachricht sendete (anstatt regelmäßig jede Minute). TTN scheint Geräte ohne regelmäßige Uplink-Aktivität als inaktiv zu betrachten und leitet keine Downlink-Nachrichten weiter.
+        \item \textbf{Lösung:} Die regelmäßige Übertragung von Uplink-Nachrichten (jede Minute) wurde wiederhergestellt, wodurch das Problem behoben wurde.
+        \item \textbf{Weitere Verbesserungen:} Aufgrund von Zeitmangel konnte keine optimierte Lösung implementiert werden.
+    \end{itemize}
+    \item \textbf{Konfigurationsproblem:}
+    \begin{itemize}
+        \item \textbf{Problem:} Der LMIC-Beispielcode konnte anfangs nicht ausgeführt werden.
+        \item \textbf{Ursache:} Fehlende Anpassung der Konfigurationsdatei (\texttt{config.h}) an die spezifischen Parameter des LoRaWAN-Moduls und der Region.
+        \item \textbf{Lösung:} Die Konfigurationsdatei wurde korrekt angepasst.
+    \end{itemize}
+\end{itemize}
+
+\subsection{Unbehobene Probleme}
+
+\begin{itemize}
+    \item \textbf{Verbindungsprobleme (Join-Requests):}
+    \begin{itemize}
+        \item \textbf{Problem:} Während des gesamten Projekts traten immer wieder Verbindungsprobleme auf. Der Arduino konnte häufig keine Verbindung zu TTN herstellen, selbst nach erfolgreichem Senden von Join-Requests. Selbst geringfügige Codeänderungen konnten die Verbindung unterbrechen.
+        \item \textbf{Ursachenforschung:} Das Problem trat sowohl bei der Arbeit zu Hause als auch in der Nähe eines Gateways auf. Der Kontakt mit dem TTN-Techsupport legte nahe, dass die Probleme möglicherweise mit den verwendeten Geräten (LoRa BEE v1.1, Antennen) zusammenhängen.
+        \item \textbf{Auswirkungen:} Die instabile Verbindung behinderte die Entwicklung und das Testen erheblich.
+        \item \textbf{Keine Lösung:} Es konnte keine zuverlässige Lösung für dieses Problem gefunden werden.
+    \end{itemize}
+    \item \textbf{Speicherbeschränkungen des Arduino:}
+    \begin{itemize}
+        \item \textbf{Problem:} Der begrenzte Speicher (SRAM) des Arduino führte dazu, dass nach dem Empfang mehrerer Downlink-Nachrichten der Speicher voll war, was weitere Aktionen (Ausgabe, Senden von Nachrichten) verhinderte.
+        \item \textbf{Keine vollständige Lösung:} Aufgrund von Zeitmangel konnte das Problem nicht vollständig behoben werden.
+        \item \textbf{Mögliche Lösungsansätze:}
+        \begin{itemize}
+            \item Ersetzen von \texttt{String}-Objekten durch \texttt{char[]}-Arrays.
+            \item Verwendung von \texttt{byte} anstelle von \texttt{int}, wo immer möglich.
+            \item Minimierung der Anzahl globaler Variablen.
+            \item Auslagern von Konstanten in den PROGMEM-Speicher (Flash-Speicher).
+        \end{itemize}
+    \end{itemize}
+\end{itemize}
+
+
+\section{Erkenntnisse und Lernergebnisse}
+
+\begin{itemize}
+    \item \textbf{The Things Network (TTN):} Ein tiefgreifendes Verständnis von TTN (\url{https://www.thethingsnetwork.org/}) und seiner Fair Use Policy wurde erworben.
+    \item \textbf{LoRaWAN-Kommunikation:} Die Funktionsweise der Kommunikation zwischen einem Endgerät (Arduino mit LoRaWAN-Modul) und einem Client (MQTT-Client) über LoRaWAN und TTN wurde verstanden.
+    \item \textbf{Arduino-Programmierung:} Erfahrung in der Programmierung der Arduino- Plattform mit der LMIC-Bibliothek wurde gesammelt.
+    \item \textbf{MQTT-Client-Entwicklung:} Ein eigener MQTT-Client wurde in Java entwickelt und implementiert.
+    \item \textbf{Speicherbeschränkungen:} Die Herausforderungen der begrenzten Speicherressourcen von Mikrocontrollern wurden erkannt und erste Lösungsansätze wurden erarbeitet. Dies ist besonders relevant, da moderne Computer in der Regel über ausreichend Speicher verfügen, sodass dieses Problem im alltäglichen Programmieren oft nicht auftritt.
+     \item \textbf{Fehlersuche:} Erfahrung mit dem systematischen finden von Fehlern und deren Dokumentierung.
+\end{itemize}
+
+\section{Fazit und Ausblick}
+
+Das Projektziel, eine bidirektionale Kommunikation zwischen einem Arduino und einem MQTT-Client über TTN aufzubauen, wurde grundsätzlich erreicht. Es konnten sowohl Uplink- als auch Downlink-Nachrichten erfolgreich übertragen werden. Die Entwicklung des MQTT-Clients ermöglichte eine flexible Steuerung der Kommunikation.
+
+Allerdings blieben einige wesentliche Probleme, insbesondere die instabile Verbindung und die Speicherbeschränkungen des Arduino, ungelöst. Diese Probleme beeinträchtigten die Zuverlässigkeit und die langfristige Nutzbarkeit des Systems.
+
+Für zukünftige Arbeiten wären folgende Punkte relevant:
+
+\begin{itemize}
+    \item \textbf{Ursachenforschung der Verbindungsprobleme:} Eine gründliche Analyse der Hardware (Antennen, Verbindungen, LoRaWAN-Modul) und der Software (LMIC-Bibliothek, Konfiguration) ist erforderlich, um die Ursache der Verbindungsprobleme zu identifizieren und zu beheben.  Es könnte auch hilfreich sein, verschiedene Arduino-Boards und LoRaWAN-Module zu testen.
+    \item \textbf{Optimierung des Speichermanagements:} Der Arduino-Code muss optimiert werden, um den Speicherverbrauch zu minimieren und eine stabile Funktion auch bei längeren Laufzeiten und häufigeren Downlink-Nachrichten zu gewährleisten.
+\end{itemize}
+
+Trotz der aufgetretenen Herausforderungen war das Projekt lehrreich und bot wertvolle Einblicke in die Entwicklung von IoT-Anwendungen mit LoRaWAN und MQTT. Die gewonnenen Erkenntnisse bilden eine gute Grundlage für zukünftige Projekte in diesem Bereich.
+
+\end{document}
